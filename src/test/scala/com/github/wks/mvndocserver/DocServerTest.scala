@@ -92,9 +92,9 @@ class DocServerTest {
   @Test
   def testReplaceProps {
     sys.props.put("abc", "def")
-    val res1 = DocServerConfig.replaceProps("xxx%{abc}yyy")
+    val res1 = DocServerConfigHelper.replaceProps("xxx%{abc}yyy")
     assertEquals("xxxdefyyy", res1)
-    val res2 = DocServerConfig.replaceProps("xxx%{abd}yyy")
+    val res2 = DocServerConfigHelper.replaceProps("xxx%{abd}yyy")
     assertEquals("xxxyyy", res2)
   }
 

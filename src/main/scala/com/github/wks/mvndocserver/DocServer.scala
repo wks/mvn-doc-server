@@ -25,6 +25,7 @@ import java.io.InputStream
 import scala.collection.GenTraversableOnce
 import grizzled.slf4j.Logging
 import util.control.Exception._
+import resource.managed
 
 object DocServer {
 
@@ -89,21 +90,11 @@ object DocServer {
     Option(jarFile.getEntry(path)).map(jarFile.getInputStream(_))
   }
 
-  /**
-   * Ensure a closeable object is closed after the block.
-   */
-  def autoClose[T](closeable: { def close() })(fn: => T): T = {
-    try {
-      fn
-    } finally {
-      closeable.close
-    }
-  }
-
   def useStreamFromRepos(reqPath: Seq[String])(fn: InputStream => Unit): Boolean = {
-    (for {
+    for {
       InRepoPath(repo, inRepoPath) <- selectRepo(reqPath)
-    } yield useStreamFromRepo(repo, inRepoPath)(fn)).getOrElse(false)
+    } { return useStreamFromRepo(repo, inRepoPath)(fn)}
+    return false
   }
 
   /**
@@ -112,20 +103,13 @@ object DocServer {
    * If not opened, return false.
    */
   def useStreamFromRepo(repo: String, inRepoPath: Seq[String])(fn: InputStream => Unit): Boolean = {
-    openJar(repo, inRepoPath) match {
-      case None => false
-      case Some(InJarPath(jarFile, innerPath)) =>
-        autoClose(jarFile) {
-          openInJarStream(jarFile, innerPath.mkString("/")) match {
-            case None => false
-            case Some(is) =>
-              autoClose(is) {
-                fn(is)
-                true
-              }
-          }
-        }
-    }
+    for {
+      InJarPath(jarFile_, innerPath) <- openJar(repo, inRepoPath)
+      jarFile <- managed(jarFile_)
+      is_ <- openInJarStream(jarFile, innerPath.mkString("/"))
+      is <- managed(is_)
+    } { fn(is); return true }
+    return false
   }
 
   /**
@@ -199,7 +183,7 @@ object DocServer {
   }
 
   def main(args: Array[String]): Unit = {
-    val server = new Server(8080)
+    val server = new Server(DocServerConfig.port)
 
     server.setHandler(handler)
 

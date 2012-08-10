@@ -18,7 +18,7 @@ name := "mvn-doc-server"
 
 organization := "com.github.wks"
 
-version := "1.0"
+version := "1.1"
 
 scalaVersion := "2.9.1"
 
@@ -33,6 +33,7 @@ libraryDependencies ++=
   "ch.qos.logback" % "logback-classic" % "1.0.6" ::
   "org.specs2" %% "specs2" % "1.11" % "test" ::
   "junit" % "junit" % "4.10" % "test" ::
+  "com.github.jsuereth.scala-arm" %% "scala-arm" % "1.1" ::
   "com.github.scala-incubator.io" %% "scala-io-core" % "0.4.0" ::
   "com.github.scala-incubator.io" %% "scala-io-file" % "0.4.0" ::
   Nil
