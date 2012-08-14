@@ -33,7 +33,7 @@ Pre-built jars are also available on GitHub. Check the downloads.
 
 ## Running
 
-Run `java -jar mvn-doc-server-assembly-x.x.jar`.
+Run `java -jar mvn-doc-server_xxxxxx.jar`.
 
 ## Command-line Options
 
@@ -42,7 +42,7 @@ Run `java -jar mvn-doc-server-assembly-x.x.jar`.
 This HTTP server serves on the default port 63787. You can set this
 port by setting the `-p` or `--port` command-line option.
 
-`java -jar mvn-doc-server-assembly-x.x.jar -p 8080`
+`java -jar mvn-doc-server_xxxxxx.jar -p 8080`
 
 The above command will serve on port 8080, instead.
 
@@ -62,7 +62,7 @@ where %{user.home} will be replaced by the user's home directory.
 You may set the `-r` or `--user-repos` command-line option to
 add additional repositories. Separate the repositories with colons.
 
-`java -jar mvn-doc-server-assembly-x.x.jar -r /a/b/c:/d/e/f`
+`java -jar mvn-doc-server_xxxxxx.jar -r /a/b/c:/d/e/f`
 
 Then `/a/b/c` and `/d/e/f` will be pre-pended before the two default
 repository paths. You man also use the %{...} pattern for Java system
