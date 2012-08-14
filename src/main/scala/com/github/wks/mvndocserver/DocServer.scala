@@ -26,6 +26,7 @@ import scala.collection.GenTraversableOnce
 import grizzled.slf4j.Logging
 import util.control.Exception._
 import resource.managed
+import com.beust.jcommander.JCommander
 
 object DocServer {
 
@@ -44,35 +45,37 @@ object DocServer {
    */
   def isJavadocJar(path: Path): Boolean = path.name.endsWith("-javadoc.jar")
 
-  case class InRepoPath(repo: String, inRepoPath: Seq[String])
+  /** A partial path, indicating a path inside anything else. */
+  case class \\[T](t: T, insidePath: Seq[String])
+
+  class SlashSlashSupport[T](t: T) {
+    def \\(insidePath: Seq[String]) = DocServer.\\(t, insidePath)
+  }
+
+  implicit def toSlashSlashSupport[T](t: T) = new SlashSlashSupport(t)
 
   /**
    * Open a jar given a list of repos.
    */
-  def selectRepo(urlPath: Seq[String]): Option[InRepoPath] = {
+  def selectRepo(repos: Seq[String], urlPath: Seq[String]): Option[\\[String]] = {
     urlPath match {
       case ri :: xs =>
         for {
           repoIndex <- allCatch.opt(ri.toInt)
           repo <- repos.lift(repoIndex)
-        } yield InRepoPath(repo, xs)
+        } yield repo \\ xs
       case _ =>
         None
     }
   }
 
   /**
-   * Result of opening a path. The jar file and the path inside the jar.
-   */
-  case class InJarPath(val jarFile: JarFile, val innerPath: Seq[String])
-
-  /**
    * Open a jar from a given path in the filesystem (probably a repo).
    */
   @tailrec
-  def openJar(fsPath: Path, urlPath: Seq[String]): Option[InJarPath] = {
+  def openJar(fsPath: Path, urlPath: Seq[String]): Option[\\[JarFile]] = {
     urlPath match {
-      case _ if isJavadocJar(fsPath) => Some(InJarPath(new JarFile(fsPath.path), urlPath))
+      case _ if isJavadocJar(fsPath) => Some(new JarFile(fsPath.path) \\ urlPath)
       case x :: xs => {
         val fsPath2 = fsPath / x
         if (fsPath2.exists) openJar(fsPath2, xs)
@@ -90,10 +93,10 @@ object DocServer {
     Option(jarFile.getEntry(path)).map(jarFile.getInputStream(_))
   }
 
-  def useStreamFromRepos(reqPath: Seq[String])(fn: InputStream => Unit): Boolean = {
+  def useStreamFromRepos(repos: Seq[String], reqPath: Seq[String])(fn: InputStream => Unit): Boolean = {
     for {
-      InRepoPath(repo, inRepoPath) <- selectRepo(reqPath)
-    } { return useStreamFromRepo(repo, inRepoPath)(fn)}
+      repo \\ inRepoPath <- selectRepo(repos, reqPath)
+    } { return useStreamFromRepo(repo, inRepoPath)(fn) }
     return false
   }
 
@@ -104,7 +107,7 @@ object DocServer {
    */
   def useStreamFromRepo(repo: String, inRepoPath: Seq[String])(fn: InputStream => Unit): Boolean = {
     for {
-      InJarPath(jarFile_, innerPath) <- openJar(repo, inRepoPath)
+      jarFile_ \\ innerPath <- openJar(repo, inRepoPath)
       jarFile <- managed(jarFile_)
       is_ <- openInJarStream(jarFile, innerPath.mkString("/"))
       is <- managed(is_)
@@ -119,11 +122,6 @@ object DocServer {
     "com/github/wks/mvndocserver/main.template.html",
     DocServer.getClass).slurpString("UTF-8")
 
-  /**
-   * The list of repositories.
-   */
-  val repos = DocServerConfig.repos
-
   case class JarInfo(baseName: String, path: String)
 
   def scanRepo(repoPath: String): Seq[JarInfo] = {
@@ -135,6 +133,33 @@ object DocServer {
       Seq()
     }
   }
+
+  def mkServer(args: Array[String]) = {
+    val opts = new DocServerOptions
+    val jc = new JCommander(opts, args: _*)
+
+    new DocServer(opts.port, opts.repos)
+  }
+
+  def main(args: Array[String]): Unit = {
+    mkServer(args).run
+  }
+}
+
+class DocServer(
+  val port: Int,
+  val repos: Seq[String]) {
+
+  def run {
+    val server = new Server(port)
+
+    server.setHandler(handler)
+
+    server.start
+    server.join
+  }
+
+  import DocServer._
 
   lazy val handler = new AbstractHandler with Logging {
     override def handle(target: String, baseReq: Request,
@@ -168,7 +193,7 @@ object DocServer {
 
         wr write mainTemplate.format(embed.toString)
       } else {
-        useStreamFromRepos(splitPath(pathInfo)) { is =>
+        useStreamFromRepos(repos, splitPath(pathInfo)) { is =>
           val os = resp.getOutputStream
           val or = Resource.fromOutputStream(os)
           val ir = Resource.fromInputStream(is)
@@ -179,16 +204,6 @@ object DocServer {
     } catch {
       case e => error("Error handling request", e); throw e
     }
-
-  }
-
-  def main(args: Array[String]): Unit = {
-    val server = new Server(DocServerConfig.port)
-
-    server.setHandler(handler)
-
-    server.start
-    server.join
 
   }
 }

@@ -36,6 +36,7 @@ libraryDependencies ++=
   "com.github.jsuereth.scala-arm" %% "scala-arm" % "1.1" ::
   "com.github.scala-incubator.io" %% "scala-io-core" % "0.4.0" ::
   "com.github.scala-incubator.io" %% "scala-io-file" % "0.4.0" ::
+  "com.beust" % "jcommander" % "1.27" ::
   Nil
 
 EclipseKeys.createSrc := EclipseCreateSrc.Default + EclipseCreateSrc.Resource

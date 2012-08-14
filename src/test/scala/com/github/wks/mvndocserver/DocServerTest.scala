@@ -27,29 +27,29 @@ class DocServerTest {
     assertTrue(DocServer.isJavadocJar(Path("a") / "b" / "c" / "jsoup-1.6.1-javadoc.jar"))
   }
 
-  val repoPath = "/home/wks/.ivy2/cache"
+  val repoPath = sys.props("user.home") + "/.ivy2/cache"
   val jarPath = "junit/junit/docs/junit-4.10-javadoc.jar"
+  val jarFullPath = repoPath + "/" + jarPath
 
-  val indexHtmlPath = "index.html"
-  val orgJunitTestHtmlPath = "org/junit/Test.html"
-  val orgJunitTestHtmlFeature = "The <code>Test</code> annotation"
-
-  def httpReq(jp: String, fp: String) = "/" + jp + "/" + fp
-  def fsJarPath(rp: String, jp: String) = rp + "/" + jp
+  val indexPath = "index.html"
+  val testPath = "org/junit/Test.html"
+  val testFeature = "The <code>Test</code> annotation"
 
   @Test
   def testJarFile {
-    val jf = new JarFile(fsJarPath(repoPath, jarPath))
+    val jf = new JarFile(jarFullPath)
     jf.close
   }
+
+  import DocServer.\\
 
   @Test
   def testFindSpecificJar {
     val fsPath = Path.fromString(repoPath)
-    val urlPath = DocServer.splitPath(httpReq(jarPath, indexHtmlPath))
+    val urlPath = DocServer.splitPath("/%s/%s".format(jarPath, indexPath))
     val result = DocServer.openJar(fsPath, urlPath)
     result match {
-      case Some(DocServer.InJarPath(jarFile, innerPath)) =>
+      case Some(jarFile \\ innerPath) =>
         assertEquals(Seq("index.html"), innerPath)
       case None =>
         fail
@@ -58,13 +58,13 @@ class DocServerTest {
 
   @Test
   def testOpenFileInJar {
-    val jarFile = new JarFile(fsJarPath(repoPath, jarPath))
-    val maybeIs = DocServer.openInJarStream(jarFile, orgJunitTestHtmlPath)
+    val jarFile = new JarFile("%s/%s".format(repoPath, jarPath))
+    val maybeIs = DocServer.openInJarStream(jarFile, testPath)
     maybeIs match {
       case None => fail
       case Some(is) =>
         val content = Resource.fromInputStream(is).slurpString
-        assertTrue(content.contains(orgJunitTestHtmlFeature))
+        assertTrue(content.contains(testFeature))
         jarFile.close
     }
   }
@@ -72,10 +72,23 @@ class DocServerTest {
   @Test
   def testUsingFileInJar {
     var preservedIs: java.io.InputStream = null
-    DocServer.useStreamFromRepo(repoPath, DocServer.splitPath(httpReq(jarPath, orgJunitTestHtmlPath))) { is =>
+    DocServer.useStreamFromRepo(repoPath, DocServer.splitPath("%s/%s".format(jarPath, testPath))) { is =>
       preservedIs = is
       val content = Resource.fromInputStream(is).slurpString
-      assertTrue(content.contains(orgJunitTestHtmlFeature))
+      assertTrue(content.contains(testFeature))
+    }
+
+    assertEquals(0, preservedIs.available())
+  }
+
+  @Test
+  def testUsingFileInJarFromRepos {
+    val ds = DocServer.mkServer(Array())
+    var preservedIs: java.io.InputStream = null
+    DocServer.useStreamFromRepos(ds.repos, DocServer.splitPath("/%d/%s/%s".format(0, jarPath, testPath))) { is =>
+      preservedIs = is
+      val content = Resource.fromInputStream(is).slurpString
+      assertTrue(content.contains(testFeature))
     }
 
     assertEquals(0, preservedIs.available())
@@ -92,15 +105,34 @@ class DocServerTest {
   @Test
   def testReplaceProps {
     sys.props.put("abc", "def")
-    val res1 = DocServerConfigHelper.replaceProps("xxx%{abc}yyy")
+    val res1 = DocServerOptions.replaceProps("xxx%{abc}yyy")
     assertEquals("xxxdefyyy", res1)
-    val res2 = DocServerConfigHelper.replaceProps("xxx%{abd}yyy")
+    val res2 = DocServerOptions.replaceProps("xxx%{abd}yyy")
     assertEquals("xxxyyy", res2)
   }
 
   @Test
   def testDefaultRepos {
-    assertEquals(2, DocServerConfig.repos.size)
+    val ds = DocServer.mkServer(Array())
+    assertEquals(2, ds.repos.size)
+  }
+
+  @Test
+  def testCustomRepos {
+    val ds = DocServer.mkServer(Array("--user-repos", "/a/b/c:/d/e/f"))
+    assertEquals(Seq("/a/b/c", "/d/e/f"), ds.repos)
+  }
+
+  @Test
+  def testCustomReposExtra {
+    val ds = DocServer.mkServer(Array("--user-repos-extra", "/a/b/c:/d/e/f"))
+    assertEquals(Seq("/a/b/c", "/d/e/f") ++ DocServerOptions.defaultRepos, ds.repos)
+  }
+
+  @Test
+  def testCustomPorts {
+    val ds = DocServer.mkServer(Array("--port", "8080"))
+    assertEquals(8080, ds.port)
   }
 
 }
