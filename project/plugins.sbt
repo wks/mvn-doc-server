@@ -11,8 +11,11 @@
 //   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
- 
-resolvers += Resolver.url("artifactory", url("http://scalasbt.artifactoryonline.com/scalasbt/sbt-plugin-releases"))(Resolver.ivyStylePatterns)
 
-addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.8.3")
+libraryDependencies <+= sbtVersion { v =>
+  // No SBT 0.11.3 support yet
+  //"com.github.siasia" %% "xsbt-proguard-plugin" % (v + "-0.1.1")
+  "com.github.siasia" %% "xsbt-proguard-plugin" % ("0.11.2-0.1.1")
+}
 
+libraryDependencies += "net.sf.proguard" % "proguard-base" % "4.7"

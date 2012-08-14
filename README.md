@@ -7,11 +7,13 @@ your browser.
 ## Introduction
 
 If you use Maven, Ivy or Sbt, you may also download the JavaDoc and
-Source packages of your dependencies. This is especially helpful with
-IDEs (like Eclipse) since both Maven and Sbt have plugins that
-configure those JavaDocs to view within your IDEs.
+Source packages of your dependencies.
 
-This program, instead, allows you to read those documents directly
+If you use Maven or Sbt with IDEs (like Eclipse), you may already be
+familiar with such packages since both Maven and Sbt have plugins that
+configure those JavaDocs to be browsed within your IDEs.
+
+This program, instead, lets you to read those documents directly
 from your browser without having to unpack any of them. Sometimes it
 is desired to browse the whole API of a package instead of reading
 about just a single type or method. You can use this program in this
@@ -20,10 +22,12 @@ case.
 ## Building
 
 This program is written in the Scala programming language. You need
-sbt to build this project.
+Sbt to build this project.
 
-Invoke `sbt assembly` and it will create a "fat" jar that includes all
-library dependencies.
+Run `sbt proguard` to build.
+
+The resulting jar includes all library dependencies and it is also
+shrunk and optimized by proguard.
 
 Pre-built jars are also available on GitHub. Check the downloads.
 

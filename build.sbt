@@ -12,8 +12,6 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-import AssemblyKeys._ // put this at the top of the file
-
 name := "mvn-doc-server"
 
 organization := "com.github.wks"
@@ -36,7 +34,7 @@ libraryDependencies ++=
   "com.github.jsuereth.scala-arm" %% "scala-arm" % "1.1" ::
   "com.github.scala-incubator.io" %% "scala-io-core" % "0.4.0" ::
   "com.github.scala-incubator.io" %% "scala-io-file" % "0.4.0" ::
-  "com.beust" % "jcommander" % "1.27" ::
+  "com.github.scopt" %% "scopt" % "2.1.0" ::
   Nil
 
 EclipseKeys.createSrc := EclipseCreateSrc.Default + EclipseCreateSrc.Resource
@@ -50,11 +48,19 @@ resolvers ++= Seq(
   "Jetty Repository" at "http://oss.sonatype.org/content/groups/jetty/"
 )
 
-assemblySettings
+seq(ProguardPlugin.proguardSettings :_*)
 
-mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
-  {
-    case "about.html" => MergeStrategy.discard
-    case x => old(x)
+proguardDefaultArgs := Seq("-dontwarn", "-dontobfuscate",
+    "-optimizationpasses","2",
+    "-optimizations","!code/allocation/variable")
+
+proguardOptions += keepMain("com.github.wks.mvndocserver.DocServer")
+
+makeInJarFilter <<= (makeInJarFilter) {
+  (makeInJarFilter) => {
+    (file) => file match {
+      case _ => makeInJarFilter(file) + ",!META-INF/**"
+    }
   }
 }
+

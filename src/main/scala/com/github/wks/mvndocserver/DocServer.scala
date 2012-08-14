@@ -26,7 +26,6 @@ import scala.collection.GenTraversableOnce
 import grizzled.slf4j.Logging
 import util.control.Exception._
 import resource.managed
-import com.beust.jcommander.JCommander
 
 object DocServer {
 
@@ -134,15 +133,21 @@ object DocServer {
     }
   }
 
-  def mkServer(args: Array[String]) = {
+  def mkServer(args: Array[String]): Option[DocServer] = {
     val opts = new DocServerOptions
-    val jc = new JCommander(opts, args: _*)
-
-    new DocServer(opts.port, opts.repos)
+    val parser = DocServerOptions.parser(opts)
+    if (parser.parse(args)) {
+      Some(new DocServer(opts.port, opts.repos))
+    } else {
+      None
+    }
   }
 
   def main(args: Array[String]): Unit = {
-    mkServer(args).run
+    mkServer(args) match {
+      case Some(ds) => ds.run
+      case None => // Do nothing since errors are already printed.
+    }
   }
 }
 

@@ -83,7 +83,7 @@ class DocServerTest {
 
   @Test
   def testUsingFileInJarFromRepos {
-    val ds = DocServer.mkServer(Array())
+    val ds = DocServer.mkServer(Array()).get
     var preservedIs: java.io.InputStream = null
     DocServer.useStreamFromRepos(ds.repos, DocServer.splitPath("/%d/%s/%s".format(0, jarPath, testPath))) { is =>
       preservedIs = is
@@ -113,26 +113,38 @@ class DocServerTest {
 
   @Test
   def testDefaultRepos {
-    val ds = DocServer.mkServer(Array())
+    val ds = DocServer.mkServer(Array()).get
     assertEquals(2, ds.repos.size)
   }
 
   @Test
   def testCustomRepos {
-    val ds = DocServer.mkServer(Array("--user-repos", "/a/b/c:/d/e/f"))
-    assertEquals(Seq("/a/b/c", "/d/e/f"), ds.repos)
+    for (optName <- Seq("-r", "--user-repos")) {
+      val ds = DocServer.mkServer(Array(optName, "/a/b/c:/d/e/f")).get
+      assertEquals(Seq("/a/b/c", "/d/e/f"), ds.repos)
+    }
   }
 
   @Test
   def testCustomReposExtra {
-    val ds = DocServer.mkServer(Array("--user-repos-extra", "/a/b/c:/d/e/f"))
-    assertEquals(Seq("/a/b/c", "/d/e/f") ++ DocServerOptions.defaultRepos, ds.repos)
+    for (optName <- Seq("-e", "--user-repos-extra")) {
+      val ds = DocServer.mkServer(Array(optName, "/a/b/c:/d/e/f")).get
+      assertEquals(Seq("/a/b/c", "/d/e/f") ++ DocServerOptions.defaultRepos, ds.repos)
+    }
   }
 
   @Test
   def testCustomPorts {
-    val ds = DocServer.mkServer(Array("--port", "8080"))
-    assertEquals(8080, ds.port)
+    for (optName <- Seq("-p", "--port")) {
+      val ds = DocServer.mkServer(Array("--port", "8080")).get
+      assertEquals(8080, ds.port)
+    }
+  }
+
+  @Test
+  def testWrongOptions {
+    val dsOption = DocServer.mkServer(Array("--wrong"))
+    assertEquals(None, dsOption)
   }
 
 }
