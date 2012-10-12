@@ -59,16 +59,16 @@ The default repositories are:
 
 where %{user.home} will be replaced by the user's home directory.
 
-You may set the `-r` or `--user-repos` command-line option to
+You may set the `-e` or `--user-repos-extra` command-line option to
 add additional repositories. Separate the repositories with colons.
 
-`java -jar mvn-doc-server_xxxxxx.jar -r /a/b/c:/d/e/f`
+`java -jar mvn-doc-server_xxxxxx.jar -e /a/b/c:/d/e/f`
 
 Then `/a/b/c` and `/d/e/f` will be pre-pended before the two default
 repository paths. You man also use the %{...} pattern for Java system
 properties.
 
-You may also set the `-e` or `--user-repos-extra` command-line option.
+You may also set the `-r` or `--user-repos` command-line option.
 In this case, the default repository paths will not be used.
 
 ## Copyright
