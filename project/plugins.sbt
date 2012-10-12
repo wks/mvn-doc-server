@@ -12,10 +12,4 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-libraryDependencies <+= sbtVersion { v =>
-  // No SBT 0.11.3 support yet
-  //"com.github.siasia" %% "xsbt-proguard-plugin" % (v + "-0.1.1")
-  "com.github.siasia" %% "xsbt-proguard-plugin" % ("0.11.2-0.1.1")
-}
-
 libraryDependencies += "net.sf.proguard" % "proguard-base" % "4.7"

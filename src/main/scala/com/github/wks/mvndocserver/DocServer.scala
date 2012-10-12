@@ -119,7 +119,7 @@ object DocServer {
    */
   val mainTemplate = Resource.fromClasspath(
     "com/github/wks/mvndocserver/main.template.html",
-    DocServer.getClass).slurpString("UTF-8")
+    DocServer.getClass).string("UTF-8")
 
   case class JarInfo(baseName: String, path: String)
 

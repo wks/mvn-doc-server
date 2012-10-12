@@ -16,30 +16,26 @@ name := "mvn-doc-server"
 
 organization := "com.github.wks"
 
-version := "1.1"
+version := "1.2"
 
-scalaVersion := "2.9.1"
+scalaVersion := "2.9.2"
 
 classpathTypes ~= (_ + "orbit")
 
 libraryDependencies ++=
-  "org.eclipse.jetty" % "jetty-server" % "8.1.5.v20120716" ::
+  "org.eclipse.jetty" % "jetty-server" % "8.1.7.v20120910" ::
   ("org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" artifacts (
     Artifact("javax.servlet", url=new java.net.URL("http://search.maven.org/remotecontent?filepath=org/eclipse/jetty/orbit/javax.servlet/3.0.0.v201112011016/javax.servlet-3.0.0.v201112011016.jar")))
   ) ::
-  "org.clapper" %% "grizzled-slf4j" % "0.6.9" ::
-  "ch.qos.logback" % "logback-classic" % "1.0.6" ::
-  "org.specs2" %% "specs2" % "1.11" % "test" ::
+  "org.clapper" %% "grizzled-slf4j" % "0.6.10" ::
+  "ch.qos.logback" % "logback-classic" % "1.0.7" ::
   "junit" % "junit" % "4.10" % "test" ::
-  "com.github.jsuereth.scala-arm" %% "scala-arm" % "1.1" ::
-  "com.github.scala-incubator.io" %% "scala-io-core" % "0.4.0" ::
-  "com.github.scala-incubator.io" %% "scala-io-file" % "0.4.0" ::
+  "com.jsuereth" %% "scala-arm" % "1.2" ::
+  "javax.transaction" % "jta" % "1.0.1B" % "provided->default" :: // Workaround: https://github.com/jsuereth/scala-arm/issues/11
+  ("com.github.scala-incubator.io" %% "scala-io-core" % "0.4.1").exclude("com.github.jsuereth.scala-arm", "scala-arm_2.9.1") ::
+  ("com.github.scala-incubator.io" %% "scala-io-file" % "0.4.1").exclude("com.github.jsuereth.scala-arm", "scala-arm_2.9.1") ::
   "com.github.scopt" %% "scopt" % "2.1.0" ::
   Nil
-
-EclipseKeys.createSrc := EclipseCreateSrc.Default + EclipseCreateSrc.Resource
-
-EclipseKeys.withSource := true
 
 resolvers ++= Seq(
   "Sonatype OSS Snapshots" at "http://oss.sonatype.org/content/repositories/snapshots/",

@@ -63,7 +63,7 @@ class DocServerTest {
     maybeIs match {
       case None => fail
       case Some(is) =>
-        val content = Resource.fromInputStream(is).slurpString
+        val content = Resource.fromInputStream(is).string
         assertTrue(content.contains(testFeature))
         jarFile.close
     }
@@ -74,7 +74,7 @@ class DocServerTest {
     var preservedIs: java.io.InputStream = null
     DocServer.useStreamFromRepo(repoPath, DocServer.splitPath("%s/%s".format(jarPath, testPath))) { is =>
       preservedIs = is
-      val content = Resource.fromInputStream(is).slurpString
+      val content = Resource.fromInputStream(is).string
       assertTrue(content.contains(testFeature))
     }
 
@@ -87,7 +87,7 @@ class DocServerTest {
     var preservedIs: java.io.InputStream = null
     DocServer.useStreamFromRepos(ds.repos, DocServer.splitPath("/%d/%s/%s".format(0, jarPath, testPath))) { is =>
       preservedIs = is
-      val content = Resource.fromInputStream(is).slurpString
+      val content = Resource.fromInputStream(is).string
       assertTrue(content.contains(testFeature))
     }
 
