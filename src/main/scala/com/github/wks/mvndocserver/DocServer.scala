@@ -133,6 +133,16 @@ object DocServer {
     }
   }
 
+  val extensionMap = List(
+    List(".html", ".htm") -> "text/html")
+
+  def inferMimeType(fileName: String): Option[String] = {
+    val lfn = fileName.toLowerCase
+    for ((ks, v) <- extensionMap; k <- ks; if lfn endsWith k)
+      return Some(v)
+    return None
+  }
+
   def mkServer(args: Array[String]): Option[DocServer] = {
     val opts = new DocServerOptions
     val parser = DocServerOptions.parser(opts)
@@ -198,7 +208,13 @@ class DocServer(
 
         wr write mainTemplate.format(embed.toString)
       } else {
-        useStreamFromRepos(repos, splitPath(pathInfo)) { is =>
+        val sPath = splitPath(pathInfo)
+        useStreamFromRepos(repos, sPath) { is =>
+          val fName = sPath.last
+          inferMimeType(fName).map { t =>
+            resp.setContentType(t)
+          }
+
           val os = resp.getOutputStream
           val or = Resource.fromOutputStream(os)
           val ir = Resource.fromInputStream(is)
